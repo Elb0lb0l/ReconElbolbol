@@ -2,7 +2,6 @@
 
 # Display banner
 figlet "ReconElbolbol"
-notify-send -u normal -t 5000 "ReconElbolbol" "Banner displayed"
 
 # Check if the correct number of arguments is provided
 if [ "$#" -ne 1 ]; then
