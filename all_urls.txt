@@ -1,3 +1,1 @@
-ifttt-adaptor.pub.kube.dm.gg
 developer.dailymotion.com
-dmxleo.com

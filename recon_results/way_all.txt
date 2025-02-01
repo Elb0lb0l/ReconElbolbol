@@ -1,5 +1,3 @@
-https://ifttt-adaptor.pub.kube.dm.gg/
-http://ifttt-adaptor.pub.kube.dm.gg/robots.txt
 http://developer.dailymotion.com:80/
 https://developer.dailymotion.com/*
 https://developer.dailymotion.com/0.10.5
