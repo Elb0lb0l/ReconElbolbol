@@ -1,6 +1,6 @@
-Sure! Here is the README for your script `ReconElbolbol.sh` using `!!!` for code blocks:
+Sure! Here is the README for your script `ReconElbolbol.sh` using ````` for code blocks:
 
-!!!markdown
+````markdown
 # ReconElbolbol
 
 `ReconElbolbol` is a comprehensive reconnaissance script designed to automate the process of gathering and analyzing URLs for various types of files and potential vulnerabilities. It utilizes multiple tools to collect data, filter it, and perform parameter and JavaScript analysis.
@@ -14,24 +14,25 @@ To install all the necessary tools, run the provided `prepareElbolbol.sh` script
 Ensure you have Go and Python installed on your system:
 
 - **Install Go**:
-  !!!bash
+  ```bash
   sudo pacman -S go
-  !!!
+  ```
+````
 
 - **Install Python**:
-  !!!bash
+  ```bash
   sudo pacman -S python python-pip
-  !!!
+  ```
 
 ### Installation Command
 
 1. Save the `prepareElbolbol.sh` script.
 2. Make the script executable and run it:
 
-   !!!bash
+   ```bash
    chmod +x prepareElbolbol.sh
    ./prepareElbolbol.sh
-   !!!
+   ```
 
 ## Usage
 
@@ -41,21 +42,27 @@ To use the `ReconElbolbol` script, provide it with a file containing URLs. The s
 
 1. Ensure the script is executable:
 
-   !!!bash
+   ```bash
    chmod +x ReconElbolbol.sh
-   !!!
+   ```
 
 2. Run the script with the input file containing URLs:
 
-   !!!bash
+   ```bash
    ./ReconElbolbol <file_with_urls>
-   !!!
+   ```
 
 ### Example
 
-!!!bash
+```bash
 ./ReconElbolbol all_urls.txt
-!!!
+```
+
+## For easy access
+
+```sh
+sudo cp ReconElbolbol.sh /usr/bin/ReconElbolbol
+```
 
 ## Tools Used
 
@@ -92,6 +99,7 @@ If you would like to contribute to this project, please fork the repository and 
 ## Acknowledgments
 
 Special thanks to the authors of the tools used in this script for their contributions to the cybersecurity community.
-!!!
 
-Save this content to a `README.md` file in your project directory. This README provides an overview of the script, installation instructions, usage guidelines, and information about the tools used. If you have any specific requirements or additional information you'd like to include, feel free to modify it accordingly.
+```
+
+```
