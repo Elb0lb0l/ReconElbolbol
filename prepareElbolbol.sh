@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# bbot , dalfox  
 # Install figlet
 notify-send -u normal -t 5000 "BolBol Is comming" "installing figlet"
 sudo pacman -S --noconfirm figlet &&
@@ -39,4 +39,10 @@ pip install waymore --break-system-packages
 # Install arjun
 notify-send -u normal -t 5000 "installing arjun "
 pip install arjun --break-system-packages
+# Install bbot
+notify-send -u normal -t 5000 "installing bbot "
+pip install bbot --break-system-packages
+# Install dalfox
+notify-send -u normal -t 5000 "installing dalfox "
+go install github.com/hahwul/dalfox/v2@latest
 

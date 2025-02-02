@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Function to check if a command is available
 check_command() {
@@ -8,62 +8,60 @@ check_command() {
   fi
 }
 
-## Adding flags for : ASN , URLS , Subdomains
-
 # Display banner
 check_command figlet
 figlet "ReconElbolbol"
-
-# Check if the correct number of arguments is provided
-if [ "$#" -ne 1 ]; then
-  notify-send -u critical -t 5000 "Error" "Usage: $0 <file_with_urls>"
-  echo "Usage: $0 <file_with_urls>"
-  exit 1
-fi
 
 # Function to show help
 show_help() {
   echo "Usage: $0 [options]"
   echo "Options:"
-  echo "  -c            Collaborator link"
-  echo "  -u            Urls"
-  echo "  -s            Subdomains"
-  echo "  -asn          ASN"
-  echo "  -o            output Directory"
-  echo "  -h            HELP ME :O"
+  echo "  -c <collaborator_link>  Collaborator link"
+  echo "  -u <urls_file>          File with URLs"
+  echo "  -s <subdomains_file>    File with subdomains"
+  echo "  -a <asn>                ASN"
+  echo "  -o <output_dir>         Output directory"
+  echo "  -h                      Display this help message"
   exit 0
 }
 
-while getopts "c:u:s:asn:o:h" opt; do
+# Parse options
+while getopts "c:u:s:a:o:h" opt; do
   case $opt in
-  c) collab_link="$OPTARG" ;;
-  u) urls="$OPTARG" ;;
-  s) subdomains="$OPTARG" ;;
-  asn) asn="$OPTARG" ;;
-  o) output_dir="$OPTARG" ;;
-  h) show_help ;;
-  *) show_help ;;
+    c) collab_link="$OPTARG" ;;
+    u) urls="$OPTARG" ;;
+    s) subdomains="$OPTARG" ;;
+    a) asn="$OPTARG" ;;
+    o) output_dir="$OPTARG" ;;
+    h) show_help ;;
+    *) show_help ;;
   esac
 done
 
-# Subdomains Shit
-if [ -f $subdomains ]; then
-  check_command bbot
-  bbot -t $(cat bbotSbudomains/subdomains.txt | sed 's/\n/ , /g' | sed 's/,.$//g') -f subdomain-enum -n bbotSbudomains -o . --retry-deps
-  bbotSub=
-  urls=$(cat bbotSbudomains/subdomains.txt $urls | sort -u)
+# Check if URLs file is provided
+if [ -z "$urls" ]; then
+  notify-send -u critical -t 5000 "Error" "Usage: $0 -u <file_with_urls>"
+  echo "Usage: $0 -u <file_with_urls>"
+  exit 1
 fi
 
 # Create output directories
 mkdir -p "$output_dir/crawled" "$output_dir/filtered" "$output_dir/paramx_results" "$output_dir/js_analysis"
 notify-send -u normal -t 5000 "Setup" "Output directories created"
 
-# Process URLs with waybackurls and save the output to way_back_all.txt
+# Process subdomains if provided
+if [ -f "$subdomains" ]; then
+  check_command bbot
+  bbot -t $(cat "$subdomains" | tr '\n' ',' | sed 's/,$//') -f subdomain-enum -n bbotSbudomains -o . --retry-deps
+  urls=$(cat bbotSbudomains/subdomains.txt "$urls" | sort -u)
+fi
+
+# Process URLs with waybackurls and save the output
 check_command waybackurls
 cat "$urls" | waybackurls | tee "$output_dir/way_back_all.txt"
 notify-send -u normal -t 5000 "Waybackurls" "URLs processed with waybackurls"
 
-# Process URLs with waymore and save the output to way_more_all.txt
+# Process URLs with waymore and save the output
 check_command waymore
 cat "$urls" | waymore -mode U -oU "$output_dir/way_more_all.txt" -v
 notify-send -u normal -t 5000 "Waymore" "URLs processed with waymore"
@@ -78,11 +76,12 @@ notify-send -u normal -t 5000 "Cariddi" "URLs processed with cariddi"
 
 # Crawling using gospider
 check_command gospider
-cat "$output_dir/way_all.txt" | gospider -t 50 |  grep -o 'http[^ ]*' | tee "$output_dir/crawled/gospider.txt"
+cat "$output_dir/way_all.txt" | gospider -t 50 | grep -o 'http[^ ]*' | tee "$output_dir/crawled/gospider.txt"
 notify-send -u normal -t 5000 "GoSpider" "URLs processed with gospider"
 
+# Crawling using katana
 check_command katana
-cat "recon_results/way_all.txt" | katana | grep -o 'http[^ ]*' | tee "recon_results/crawled/katana.txt"
+cat "$output_dir/way_all.txt" | katana | grep -o 'http[^ ]*' | tee "$output_dir/crawled/katana.txt"
 notify-send -u normal -t 5000 "Katana" "URLs processed with katana"
 
 # Combine and sort unique URLs from the crawlers
@@ -118,27 +117,25 @@ declare -A file_types=(
   ["private_key_files.txt"]="\\.key(\\?|$)"
 )
 
-
 for urls in "${!file_types[@]}"; do
   regex=${file_types[$urls]}
   cat "$output_dir/crawled/crawled.txt" | grep -E "$regex" >"$output_dir/filtered/$urls"
   notify-send -u normal -t 5000 "Filtering" "Filtered URLs saved to $urls"
 done
 
-# Run paramspider on subdomains.txt URLs
+# Run paramspider on URLs
 check_command paramspider
-paramspider -l "bbotSbudomains/subdomains.txt"  | tee "$output_dir/paramspider.txt"
+cat "$urls" | awk -F[/:] '{print $4}' | sort -u | xargs -I{} paramspider -d {}
+paramspider -l "$subdomains" | tee "$output_dir/paramspider.txt"
 notify-send -u normal -t 5000 "ParamSpider" "ParamSpider analysis completed"
 
-# Run Grep =  on crawled.txt urls
-paramspider -l "$output_dir/crawled/crawled.txt"  | grep -o "=" |tee "$output_dir/CrawledParam.txt"
+# Run Grep for '=' on crawled URLs
+paramspider -l "$output_dir/crawled/crawled.txt" | grep -o "=" | tee "$output_dir/CrawledParam.txt"
 notify-send -u normal -t 5000 "Grepped =" "Greping analysis completed"
 
-# collect into param_all.txt
-cat   "$output_dir/paramspider.txt" "$output_dir/CrawledParam.txt" | sort | uniq | tee  "$output_dir/param_all.txt"
-notify-send -u normal -t 5000 "recon_results/param_all.txt is collected"
-
-
+# Collect into param_all.txt
+cat "$output_dir/paramspider.txt" "$output_dir/CrawledParam.txt" | sort | uniq | tee "$output_dir/param_all.txt"
+notify-send -u normal -t 5000 "ReconElbolbol" "param_all.txt is collected"
 
 # Run paramx for different tags
 check_command paramx
@@ -159,12 +156,11 @@ for urls in "${!paramx_tags[@]}"; do
   notify-send -u normal -t 5000 "ParamX" "ParamX analysis for $tag completed"
 done
 
-# xss testing  
-# kxss -> filtering for available characters -> kxss.txt 
+# XSS testing
+# kxss -> filtering for available characters -> kxss.txt
 cat "$output_dir/paramx_results/xss.txt" | kxss | tee "$output_dir/paramx_results/kxss.txt"
-# dalfox [mode] [target] [flags]  -> dalfox.txt : contains pocs for xss 
-dalfox file $output_dir/paramx_results/param_all.txt --no-spinner --only-poc=r --ignore-return 302,404,403 --skip-bav -b "$collab_link" -w 100 |  cut -d " " -f 2 > "$output_dir/paramx_results/dalfox.txt"
-
+# dalfox -> dalfox.txt : contains POCs for XSS
+dalfox file "$output_dir/paramx_results/param_all.txt" --no-spinner --only-poc=r --ignore-return 302,404,403 --skip-bav -b "$collab_link" -w 100 | cut -d " " -f 2 > "$output_dir/paramx_results/dalfox.txt"
 
 # Run jsleak and mantra on JavaScript files
 check_command jsleak
@@ -177,6 +173,10 @@ notify-send -u normal -t 5000 "Mantra" "JavaScript analysis with Mantra complete
 
 notify-send -u normal -t 5000 "ReconElbolbol" "Script execution completed"
 
+# Manual tasks: Arjun for parameter discovery
+mkdir -p arjun
+cat "$output_dir/crawled/crawled.txt" | grep -E '\.(php|asp|jsp|aspx|cgi|pl|py|rb|html|htm)$' | tee arjun/extensioned_targets.txt
+arjun -i arjun/extensioned_targets.txt -t 50 -oT arjun/arjun.txt | tee arjun/arjun_raw.txt 
 
 
 
@@ -185,10 +185,12 @@ notify-send -u normal -t 5000 "ReconElbolbol" "Script execution completed"
 # arjun  -u https://api.example.com/endpoint --include 'api_key=xxxxx'
 # arjun -u https://api.example.com/endpoint --headers "Accept-Language: en-US\nCookie: null"
 # arjun -> manual revision file 
-mkdir -p arjun 
-cat crawled.txt | grep -E '\.(php|asp|jsp|aspx|cgi|pl|py|rb|html|htm)$' | tee arjun/extensioned_targets.txt && arjun -i arjun/extensioned_targets.txt -t 50 -oT arjun/arjun.txt | tee arjun/arjun_raw.txt
-
-
 # Angular js 
 # Detection
+# xss in angular is alot just for old versions use this 
 # https://techbrunch.github.io/patt-mkdocs/XSS%20Injection/XSS%20in%20Angular/
+# for i in $();do ;done 
+# # 
+# for i in $(cat subs);
+#       do curl $i | grep "elementUrl";
+# done
