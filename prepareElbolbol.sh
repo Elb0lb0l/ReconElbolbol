@@ -1,28 +1,33 @@
 #!/bin/bash
 
 # Install figlet
+notify-send -u normal -t 5000 "BolBol Is comming" "installing figlet"
 sudo pacman -S --noconfirm figlet &&
-
 # Install waybackurls
-go install github.com/tomnomnom/waybackurls@latest &&
-
+notify-send -u normal -t 5000 "installing waybackurls"
+yay -S waybackurls
 # Install cariddi
-go install github.com/edoardottt/cariddi/cmd/cariddi@latest &&
-
+notify-send -u normal -t 5000 "installing cariddi"
+yay -S cariddi
 # Install hakrawler
-go install github.com/hakluke/hakrawler@latest &&
-
+notify-send -u normal -t 5000 "installing hakrawler"
+yay -S hakrawler
 # Install katana
-go install github.com/projectdiscovery/katana/cmd/katana@latest &&
-
+notify-send -u normal -t 5000 "installing katana"
+yay -S katana
 # Install paramspider
-git clone https://github.com/devanshbatham/ParamSpider.git && cd ParamSpider && pip3 install -r requirements.txt --break-system-packages && cd .. && rm -rf ParamSpider &&
-
+notify-send -u normal -t 5000 "installing paramspider"
+git clone https://github.com/devanshbatham/ParamSpider.git && cd ParamSpider && pip install . --break-system-packages && cd ..
 # Install paramx
-go install github.com/m3n0sd0n4ld/paramx@latest &&
-
+notify-send -u normal -t 5000 "installing paramx"
+go install github.com/m3n0sd0n4ld/paramx@latest
 # Install jsleak
-go install github.com/channyein1337/jsleak@latest &&
-
+notify-send -u normal -t 5000 "installing jsleak "
+go install github.com/channyein1337/jsleak@latest
 # Install mantra
-go install github.com/0xspade/mantra@latest
+notify-send -u normal -t 5000 "installing mantra"
+yay -S mantra
+# Install waymore 
+notify-send -u normal -t 5000 "installing waymore "
+pip install waymore --break-system-packages
+
