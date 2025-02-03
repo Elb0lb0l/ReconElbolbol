@@ -17,18 +17,20 @@ show_help() {
   echo "Usage: $0 [options]"
   echo "Options:"
   echo "  -c <collaborator_link>  Collaborator link"
+  echo "  -p                      patterns directory path"
   echo "  -u <urls_file>          File with URLs"
   echo "  -s <subdomains_file>    File with subdomains"
   echo "  -a <asn>                ASN"
-  echo "  -o <output_dir>         Output directory"
+  echo "  -o <output_dir>         Output directory not <results>"
   echo "  -h                      Display this help message"
   exit 0
 }
 
 # Parse options
-while getopts "c:u:s:a:o:h" opt; do
+while getopts "c:p:u:s:a:o:h" opt; do
   case $opt in
     c) collab_link="$OPTARG" ;;
+    p) patterns="$OPTARG" ;;
     u) urls="$OPTARG" ;;
     s) subdomains="$OPTARG" ;;
     a) asn="$OPTARG" ;;
@@ -76,7 +78,7 @@ notify-send -u normal -t 5000 "Cariddi" "URLs processed with cariddi"
 
 # Crawling using gospider
 check_command gospider
-cat "$output_dir/way_all.txt" | gospider -t 50 | grep -o 'http[^ ]*' | tee "$output_dir/crawled/gospider.txt"
+cat "$output_dir/way_all.txt" | gospider -t 50 -c 50  | grep -o 'http[^ ]*' | tee "$output_dir/crawled/gospider.txt"
 notify-send -u normal -t 5000 "GoSpider" "URLs processed with gospider"
 
 # Crawling using katana
@@ -120,18 +122,31 @@ declare -A file_types=(
 for urls in "${!file_types[@]}"; do
   regex=${file_types[$urls]}
   cat "$output_dir/crawled/crawled.txt" | grep -E "$regex" >"$output_dir/filtered/$urls"
-  notify-send -u normal -t 5000 "Filtering" "Filtered URLs saved to $urls"
+  notify-send -u normal -t 5000  "Filtered URLs saved to $urls"
 done
 
 # Run paramspider on URLs
 check_command paramspider
-cat "$urls" | awk -F[/:] '{print $4}' | sort -u | xargs -I{} paramspider -d {}
-paramspider -l "$subdomains" | tee "$output_dir/paramspider.txt"
+
+cat $urls | while read -r i; do
+    paramspider -d "$i"
+done
+
+
+if [ -f "$subdomains" ]; then
+  cat $subdomains | while read -r i; do
+      paramspider -d "$i"
+  done
+fi
+
+
+cat results/* | tee $output_dir/paramspider.txt 
 notify-send -u normal -t 5000 "ParamSpider" "ParamSpider analysis completed"
 
+
 # Run Grep for '=' on crawled URLs
-paramspider -l "$output_dir/crawled/crawled.txt" | grep -o "=" | tee "$output_dir/CrawledParam.txt"
-notify-send -u normal -t 5000 "Grepped =" "Greping analysis completed"
+cat  "$output_dir/crawled/crawled.txt" | grep  "=" | tee "$output_dir/CrawledParam.txt"
+notify-send -u normal -t 5000 "Grepped =" "Greped analysis completed"
 
 # Collect into param_all.txt
 cat "$output_dir/paramspider.txt" "$output_dir/CrawledParam.txt" | sort | uniq | tee "$output_dir/param_all.txt"
@@ -140,19 +155,19 @@ notify-send -u normal -t 5000 "ReconElbolbol" "param_all.txt is collected"
 # Run paramx for different tags
 check_command paramx
 declare -A paramx_tags=(
-  ["xss.txt"]="-tag xss"
-  ["sqli.txt"]="-tag sqli"
-  ["lfi.txt"]="-tag lfi"
-  ["rce.txt"]="-tag rce"
-  ["idor.txt"]="-tag idor"
-  ["ssrf.txt"]="-tag ssrf"
-  ["ssti.txt"]="-tag ssti"
-  ["redirect.txt"]="-tag redirect"
+  ["xss.txt"]="xss.json"
+  ["sqli.txt"]="sqli.json"
+  ["lfi.txt"]="lfi.json"
+  ["rce.txt"]="rce.json"
+  ["idor.txt"]="idor.json"
+  ["ssrf.txt"]="ssrf.json"
+  ["ssti.txt"]="ssti.json"
+  ["redirect.txt"]="redirect.json"
 )
 
 for urls in "${!paramx_tags[@]}"; do
   tag=${paramx_tags[$urls]}
-  cat "$output_dir/param_all.txt" | paramx -rw FUZZ -tp patterns -t patterns/$tag | tee "$output_dir/paramx_results/$urls"
+  cat "$output_dir/param_all.txt" | paramx -rw FUZZ -tp $patterns -t "$patterns/$tag" | tee "$output_dir/paramx_results/$urls"
   notify-send -u normal -t 5000 "ParamX" "ParamX analysis for $tag completed"
 done
 
@@ -164,19 +179,23 @@ dalfox file "$output_dir/paramx_results/param_all.txt" --no-spinner --only-poc=r
 
 # Run jsleak and mantra on JavaScript files
 check_command jsleak
-cat "$output_dir/filtered/javascript_files.txt" | jsleak -s -l -k | tee "$output_dir/js_analysis/jsleak.txt"
+cat "$output_dir/filtered/javascript_files.txt" | jsleak  | tee "$output_dir/js_analysis/jsleak.txt"
 notify-send -u normal -t 5000 "JsLeak" "JavaScript analysis with JsLeak completed"
 
 check_command mantra
-cat "$output_dir/filtered/javascript_files.txt" | mantra | tee "$output_dir/js_analysis/mantra.txt"
+cat "$output_dir/filtered/javascript_files.txt" | mantra | grep "+" |  tee "$output_dir/js_analysis/mantra.txt"
 notify-send -u normal -t 5000 "Mantra" "JavaScript analysis with Mantra completed"
-
-notify-send -u normal -t 5000 "ReconElbolbol" "Script execution completed"
 
 # Manual tasks: Arjun for parameter discovery
 mkdir -p arjun
 cat "$output_dir/crawled/crawled.txt" | grep -E '\.(php|asp|jsp|aspx|cgi|pl|py|rb|html|htm)$' | tee arjun/extensioned_targets.txt
 arjun -i arjun/extensioned_targets.txt -t 50 -oT arjun/arjun.txt | tee arjun/arjun_raw.txt 
+
+notify-send -u normal -t 5000 "Arjun manual task is Done"
+
+
+
+notify-send -u normal -t 5000 "ReconElbolbol" "Script execution completed"
 
 
 
@@ -193,4 +212,4 @@ arjun -i arjun/extensioned_targets.txt -t 50 -oT arjun/arjun.txt | tee arjun/arj
 # # 
 # for i in $(cat subs);
 #       do curl $i | grep "elementUrl";
-# done
+#
