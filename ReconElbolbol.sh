@@ -145,7 +145,7 @@ notify-send -u normal -t 5000 "ParamSpider" "ParamSpider analysis completed"
 
 
 # Run Grep for '=' on crawled URLs
-cat  "$output_dir/crawled/crawled.txt" | grep  "=" | tee "$output_dir/CrawledParam.txt"
+cat  "$output_dir/crawled/crawled.txt" | grep  "?" | tee "$output_dir/CrawledParam.txt"
 notify-send -u normal -t 5000 "Grepped =" "Greped analysis completed"
 
 # Collect into param_all.txt
@@ -208,8 +208,8 @@ notify-send -u normal -t 5000 "ReconElbolbol" "Script execution completed"
 # Detection
 # xss in angular is alot just for old versions use this 
 # https://techbrunch.github.io/patt-mkdocs/XSS%20Injection/XSS%20in%20Angular/
-# for i in $();do ;done 
+# for i in $();do  ;done 
 # # 
 # for i in $(cat subs);
-#       do curl $i | grep "elementUrl";
+#       do curl $i | grep "elementUrl";done 
 #
