@@ -49,7 +49,7 @@ To use the `ReconElbolbol` script, provide it with a file containing URLs. The s
 2. Run the script with the input file containing URLs:
 
    ```bash
-   ./ReconElbolbol <file_with_urls>
+   ./ReconElbolbol <file_with_urls> -o .
    ```
 
 ### Example
