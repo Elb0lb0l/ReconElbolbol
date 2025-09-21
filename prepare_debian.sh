@@ -31,6 +31,8 @@ go install github.com/tomnomnom/waybackurls@latest
 echo "[*] Installing gospider (jaeles-project)"
 go install github.com/jaeles-project/gospider@latest
 
+sudo apt install -y libnotify-bin
+
 # katana (projectdiscovery)
 echo "[*] Installing katana (projectdiscovery)"
 # Katana may need a newer Go; if installation fails, update Go.
